@@ -15,4 +15,5 @@ LODES-Star is a handy python wrapper for fetching LODES tables from the US Censu
   - "JT04" for All Federal Jobs
   - "JT05" for Federal Primary Jobs 
 - year - Data year [integer] (Default=most recent available)
-- fetch_only - Do not load into memory, download into cache only [True/False] (Default=False)
+- cache - Cache LODES file into local disk for quick future loading [bool] (Default=True)
+- cache_only - Do not load into memory, download into cache only [bool] (Default=False)
