@@ -82,7 +82,7 @@ def file_fetch(file_url, of_string="", fetch_only=True):
     return
 
 def load_lodes(state,
-               zone_types=['od', 'rac', 'wac'],
+               zone_types='od',
                job_cat='JT00',
                year=None,
                fetch_only=False):
