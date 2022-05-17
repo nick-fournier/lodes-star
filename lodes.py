@@ -15,8 +15,11 @@ def file_fetch(file_url, of_string="", cache=True, cache_only=True):
         # make an HTTP request within a context manager
         s = requests.Session()
         response = requests_retry_session(session=s).get(file_url, stream=True, timeout=5)
-
-        if cache:
+        # Save to cache or download straight to memory
+        if not cache and not cache_only:
+            # Download straight to memory
+            return pd.read_csv(iterable_to_stream(response.iter_content()), sep=',', compression='gzip')
+        else:
             with response as r:
                 # check header to get content length, in bytes
                 total_length = int(r.headers.get("Content-Length"))
@@ -25,17 +28,17 @@ def file_fetch(file_url, of_string="", cache=True, cache_only=True):
                     # save the output to a file
                     with open(file_path, 'wb') as output:
                         shutil.copyfileobj(raw, output)
-            # Read the data into pandas
-            if not cache_only:
-                print(' '.join(['Loading cached', file_name, of_string]))
-                df = pd.read_csv(file_path, compression="gzip", dtype={'h_geocode': str, 'w_geocode': str})
-                df.drop(columns='createdate', inplace=True)
-                return df
-            else:
-                print(' '.join(['Skipping cached', file_name, of_string, "while fetch_only=True"]))
-                return
-        else:
-            return pd.read_csv(iterable_to_stream(response.iter_content()), sep=',', compression='gzip')
+
+    # Read the data into pandas
+    if not cache_only:
+        print(' '.join(['Loading cached', file_name, of_string]))
+        return pd.read_csv(file_path,
+                           compression="gzip",
+                           dtype={'h_geocode': str, 'w_geocode': str}
+                           ).drop(columns='createdate')
+    else:
+        print(' '.join(['Skipping cached', file_name, of_string, "while fetch_only=True"]))
+        return
 
 
 def load_lodes(state,
