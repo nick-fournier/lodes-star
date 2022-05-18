@@ -1,44 +1,5 @@
-import pandas as pd
-import shutil
 from utils import *
-from tqdm.auto import tqdm
-
-
-###
-def file_fetch(file_url, of_string="", cache=True, cache_only=True):
-    file_name = file_url.split('/')[-1]
-    file_path = os.path.join('cache', file_name)
-
-    # Check if already cached
-    if not os.path.exists(file_path):
-        desc_lab = ' '.join(['Fetching', file_name, of_string])
-        # make an HTTP request within a context manager
-        s = requests.Session()
-        response = requests_retry_session(session=s).get(file_url, stream=True, timeout=5)
-        # Save to cache or download straight to memory
-        if not cache and not cache_only:
-            # Download straight to memory
-            return pd.read_csv(iterable_to_stream(response.iter_content()), sep=',', compression='gzip')
-        else:
-            with response as r:
-                # check header to get content length, in bytes
-                total_length = int(r.headers.get("Content-Length"))
-                # implement progress bar via tqdm
-                with tqdm.wrapattr(r.raw, "read", total=total_length, desc=desc_lab) as raw:
-                    # save the output to a file
-                    with open(file_path, 'wb') as output:
-                        shutil.copyfileobj(raw, output)
-
-    # Read the data into pandas
-    if not cache_only:
-        print(' '.join(['Loading cached', file_name, of_string]))
-        return pd.read_csv(file_path,
-                           compression="gzip",
-                           dtype={'h_geocode': str, 'w_geocode': str}
-                           ).drop(columns='createdate')
-    else:
-        print(' '.join(['Skipping cached', file_name, of_string, "while fetch_only=True"]))
-        return
+import pandas as pd
 
 
 def load_lodes(state,
@@ -53,7 +14,7 @@ def load_lodes(state,
     base_url = 'https://lehd.ces.census.gov/data/lodes/LODES7'
 
     if not os.path.exists('cache'):
-        os.mkdir('cache')
+        os.mkdir('cache/lodes')
 
     if not year:
         print('No year specified', end=' ')
@@ -62,6 +23,9 @@ def load_lodes(state,
 
     lodes = {}
     for zone in zone_types:
+        if not os.path.exists('cache'):
+            os.mkdir(os.path.join('cache/lodes', zone))
+
         url = '/'.join([base_url, state.lower(), zone.lower()])
         s = requests.Session()
         response = requests_retry_session(session=s).get(url, stream=True, timeout=5)
@@ -76,7 +40,14 @@ def load_lodes(state,
             key = os.path.splitext(fname)[0]
             of_string = '/'.join([str(flist.index(fname) + 1), str(len(flist))])
             file_url = os.path.join(url, fname)
-            lodes[key] = file_fetch(file_url, of_string, cache, cache_only)
+
+            data_string = file_fetch(file_url, of_string, cache)
+            if cache_only:
+                print(' '.join(['Skipping cached', fname, of_string, "while fetch_only=True"]))
+                return
+            df = pd.read_csv(io.StringIO(data_string), dtype={'h_geocode': str, 'w_geocode': str})
+            lodes[key] = df.drop(columns='createdate')
+
     print('done')
 
     return lodes

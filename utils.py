@@ -1,10 +1,14 @@
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 import io
 import os
 import glob
+import shutil
+import gzip
+from zipfile import ZipFile
 from bs4 import BeautifulSoup
+from tqdm.auto import tqdm
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 ###
@@ -79,3 +83,58 @@ def iterable_to_stream(iterable, buffer_size=io.DEFAULT_BUFFER_SIZE):
             except StopIteration:
                 return 0    # indicate EOF
     return io.BufferedReader(IterStream(), buffer_size=buffer_size)
+
+
+def stream_to_file(response, file_path, desc_lab=""):
+    # check header to get content length, in bytes
+    total_length = int(response.headers.get("Content-Length"))
+    # implement progress bar via tqdm
+    with tqdm.wrapattr(response.raw, "read", total=total_length, desc=desc_lab) as raw:
+        # save the output to a file
+        with open(file_path, 'wb') as output:
+            shutil.copyfileobj(raw, output)
+
+
+def file_fetch(file_url, of_string="", cache=True):
+    file_name = file_url.split('/')[-1]
+    file_path = os.path.join('cache', file_name)
+
+    # Check if already cached
+    if not os.path.exists(file_path):
+        # make an HTTP request within a context manager
+        s = requests.Session()
+        response = requests_retry_session(session=s).get(file_url, stream=True, timeout=5)
+
+        if cache:
+            obj = open(file_path, 'wb')
+        else:
+            obj = open(os.devnull, 'wb')
+
+        bytes_data = b''
+        with tqdm.wrapattr(obj, "write",
+                           desc=' '.join(['Fetching', file_name, of_string]),
+                           total=int(response.headers.get("Content-Length"))
+                           ) as out:
+
+            # save the output to a file
+            for buf in response.iter_content(io.DEFAULT_BUFFER_SIZE):
+                out.write(buf)
+                bytes_data += buf
+
+        return gzip.decompress(bytes_data).decode('utf-8')
+
+    # Read existing data
+    else:
+        print(' '.join(['Loading cached', file_name, of_string]))
+        # open text file in read mode
+        ext = os.path.splitext(file_path)[-1]
+
+        if ext == '.gz':
+            with gzip.open(file_path, "r") as gzf:
+                return gzf.read()
+
+        if ext == '.zip':
+            with ZipFile('ca_od_aux_JT00_2002.zip') as zf:
+                assert(len(zf.namelist()) == 1)
+                with zf.open(zf.namelist()[0]) as f:
+                    return f.read()
