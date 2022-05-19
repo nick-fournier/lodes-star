@@ -3,12 +3,11 @@ import io
 import os
 import glob
 import shutil
-import gzip
-from zipfile import ZipFile
 from bs4 import BeautifulSoup
 from tqdm.auto import tqdm
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from urllib.parse import urlparse
 
 
 ###
@@ -17,6 +16,27 @@ def get_cache_list(cache_dir=os.getcwd(), full_path=True):
         return [f for f in glob.glob(os.path.join(cache_dir, '**/*.csv.gz'), recursive=True)]
     else:
         return [os.path.basename(f) for f in glob.glob(os.path.join(cache_dir, '**/*.csv.gz'), recursive=True)]
+
+
+def get_file_list(base_url, state, zone_types, job_cat, year):
+    file_list = {}
+
+    for zone in zone_types:
+        # Get list of relevant files
+        url = '/'.join([base_url, state.lower(), zone.lower()])
+
+        # HTTPS session
+        s = requests.Session()
+        response = requests_retry_session(session=s).get(url, stream=True, timeout=5)
+
+        # Parse the hrefs from page
+        hrefs = [x.get('href') for x in BeautifulSoup(response.text, 'html.parser').find_all('a')]
+
+        for node in hrefs:
+            if node.endswith('.csv.gz') and year in node and any([True for x in job_cat if x in node]):
+                file_list[node] = os.path.join(url, node)
+
+    return file_list
 
 
 def get_latest_year(base_url, state):
@@ -58,6 +78,39 @@ def requests_retry_session(
     return session
 
 
+def fetch_bytes(file_url, suffix="", cache=True):
+    file_path = os.path.join('cache', urlparse(file_url).path.lstrip('/'))
+    file_name = os.path.basename(file_url)
+
+    if not os.path.exists(file_path.replace(file_name, '')):
+        os.makedirs(file_path.replace(file_name, ''))
+
+    # Check if already cached
+    if not os.path.exists(file_path):
+        s = requests.Session()
+        response = requests_retry_session(session=s).get(file_url, stream=True, timeout=5)
+
+        # file obj as real file or null
+        obj = open(file_path, 'wb') if cache else open(os.devnull, 'wb')
+
+        bytes_data = b''
+        with tqdm.wrapattr(obj, "write",
+                           desc=' '.join(['Fetching', file_name, suffix]),
+                           total=int(response.headers.get("Content-Length", 0))
+                           ) as out:
+
+            # save the output to a file
+            for buf in response.iter_content(io.DEFAULT_BUFFER_SIZE):
+                out.write(buf)
+                bytes_data += buf
+
+        return bytes_data
+
+    else:
+        print(' '.join(['Loading cached', file_name, suffix]))
+        return open(file_path, 'rb').read()
+
+
 def iterable_to_stream(iterable, buffer_size=io.DEFAULT_BUFFER_SIZE):
     """
     Lets you use an iterable (e.g. a generator) that yields bytestrings as a read-only
@@ -93,48 +146,3 @@ def stream_to_file(response, file_path, desc_lab=""):
         # save the output to a file
         with open(file_path, 'wb') as output:
             shutil.copyfileobj(raw, output)
-
-
-def file_fetch(file_url, of_string="", cache=True):
-    file_name = file_url.split('/')[-1]
-    file_path = os.path.join('cache', file_name)
-
-    # Check if already cached
-    if not os.path.exists(file_path):
-        # make an HTTP request within a context manager
-        s = requests.Session()
-        response = requests_retry_session(session=s).get(file_url, stream=True, timeout=5)
-
-        if cache:
-            obj = open(file_path, 'wb')
-        else:
-            obj = open(os.devnull, 'wb')
-
-        bytes_data = b''
-        with tqdm.wrapattr(obj, "write",
-                           desc=' '.join(['Fetching', file_name, of_string]),
-                           total=int(response.headers.get("Content-Length"))
-                           ) as out:
-
-            # save the output to a file
-            for buf in response.iter_content(io.DEFAULT_BUFFER_SIZE):
-                out.write(buf)
-                bytes_data += buf
-
-        return gzip.decompress(bytes_data).decode('utf-8')
-
-    # Read existing data
-    else:
-        print(' '.join(['Loading cached', file_name, of_string]))
-        # open text file in read mode
-        ext = os.path.splitext(file_path)[-1]
-
-        if ext == '.gz':
-            with gzip.open(file_path, "r") as gzf:
-                return gzf.read()
-
-        if ext == '.zip':
-            with ZipFile('ca_od_aux_JT00_2002.zip') as zf:
-                assert(len(zf.namelist()) == 1)
-                with zf.open(zf.namelist()[0]) as f:
-                    return f.read()
