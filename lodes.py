@@ -27,18 +27,16 @@ def load_lodes(state,
     # Downloading files
     lodes = {}
     for fname, file_url in flist.items():
-        key = fname.replace('.csv.gz', '')
-        suffix = '{}/{}'.format(list(flist.keys()).index(fname) + 1, len(flist))
-
         # Fetch the file from URL or cache
+        suffix = '{}/{}'.format(list(flist.keys()).index(fname) + 1, len(flist))
         bytes_data = fetch_bytes(file_url, suffix, cache)
 
-        # Decompress the gzip bytes data
+        # Decompress the gzip bytes data and read into pandas dataframe
         string_io = io.StringIO(gzip.decompress(bytes_data).decode('utf-8'))
-
-        # read into pandas dataframe
         df = pd.read_csv(string_io, dtype={'h_geocode': str, 'w_geocode': str})
 
+        # Stash it
+        key = fname.replace('.csv.gz', '')
         lodes[key] = df.drop(columns='createdate')
 
     print('done')
