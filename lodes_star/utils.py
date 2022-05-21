@@ -79,7 +79,7 @@ def requests_retry_session(
 
 
 def fetch_bytes(file_url, suffix="", cache=True):
-    file_path = os.path.join('cache', urlparse(file_url).path.lstrip('/'))
+    file_path = os.path.join('../cache', urlparse(file_url).path.lstrip('/'))
     file_name = os.path.basename(file_url)
 
     if not os.path.exists(file_path.replace(file_name, '')):
