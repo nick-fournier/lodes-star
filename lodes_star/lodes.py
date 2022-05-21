@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import fiona
 import gzip
 import geopandas as gpd

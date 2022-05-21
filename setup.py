@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='lodes_star',
-    version='0.1.0',
+    version='0.1.2',
     description='For scraping Longitudinal Origin-Destination Employment Statisics (LODES) data from'
                 ' the US Census as well as fetching Census Block GIS shapefiles.',
     url='https://github.com/nick-fournier/lodes-star',
@@ -13,14 +13,13 @@ setup(
     install_requires=['beautifulsoup4==4.11.1',
                       'Fiona==1.8.21',
                       'geopandas==0.10.2',
-                      'matplotlib==3.1.2',
-                      'pandas==1.4.1',
-                      'requests==2.22.0',
+                      'pandas==1.4.2',
+                      'requests==2.27.1',
                       'scipy==1.8.1',
+                      'setuptools==60.2.0',
                       'sparse==0.13.0',
-                      'tqdm==4.30.0',
-                      'urllib3==1.25.8'],
-
+                      'tqdm==4.64.0',
+                      'urllib3==1.26.9'],
     classifiers=[
         'Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',
