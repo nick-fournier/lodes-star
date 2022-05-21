@@ -1,6 +1,10 @@
-from utils import *
+import matplotlib.pyplot as plt
+import fiona
 import gzip
+import geopandas as gpd
 import pandas as pd
+from utils import *
+from state_codes import State
 
 
 def load_lodes(state,
@@ -41,14 +45,7 @@ def load_lodes(state,
 
     return lodes
 
-import matplotlib.pyplot as plt
-import fiona
-import geopandas as gpd
-from utils import *
-from state_codes import State
-
-
-###
+# Fetch Census Blocks
 def load_geoblocks(state, year='2021', cache=True):
     assert(len(year) == 4)
     year = str(year)
