@@ -48,8 +48,8 @@ def fetch_geoblocks(state, year='2021', cache=True):
     assert(len(year) == 4)
     year = str(year)
 
-    if len(state) > 1:
-        state = State.abb[state].lower()
+    if len(state) > 2:
+        state = State.abb[state.capitalize()].lower()
     state_num = State.code[state.upper()]
 
     # Format the file url
