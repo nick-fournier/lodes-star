@@ -2,15 +2,15 @@ import fiona
 import gzip
 import geopandas as gpd
 import pandas as pd
-from utils import *
-from state_codes import State
+from lodes_star.utils import *
+from lodes_star.state_codes import State
 
 
-def load_lodes(state,
-               zone_types='od',
-               job_cat='JT00',
-               year=None,
-               cache=True):
+def fetch_lodes(state,
+                zone_types='od',
+                job_cat='JT00',
+                year=None,
+                cache=True):
 
     zone_types = [zone_types] if isinstance(zone_types, str) else zone_types
     job_cat = [job_cat] if isinstance(job_cat, str) else job_cat
@@ -42,8 +42,9 @@ def load_lodes(state,
 
     return lodes
 
+
 # Fetch Census Blocks
-def load_geoblocks(state, year='2021', cache=True):
+def fetch_geoblocks(state, year='2021', cache=True):
     assert(len(year) == 4)
     year = str(year)
 

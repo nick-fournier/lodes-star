@@ -11,6 +11,44 @@ from urllib.parse import urlparse
 
 
 ###
+def fetch_bytes(file_url, suffix="", cache=True):
+    if isinstance(cache, str):
+        file_path = os.path.join(cache, urlparse(file_url).path.lstrip('/'))
+    else:
+        file_path = os.path.join('./cache', urlparse(file_url).path.lstrip('/'))
+
+    print(file_path)
+    file_name = os.path.basename(file_url)
+
+    if not os.path.exists(file_path.replace(file_name, '')):
+        os.makedirs(file_path.replace(file_name, ''))
+
+    # Check if already cached
+    if not os.path.exists(file_path):
+        s = requests.Session()
+        response = requests_retry_session(session=s).get(file_url, stream=True, timeout=5)
+
+        # file obj as real file or nulls
+        obj = open(file_path, 'wb') if cache else open(os.devnull, 'wb')
+
+        bytes_data = b''
+        with tqdm.wrapattr(obj, "write",
+                           desc=' '.join(['Fetching', file_name, suffix]),
+                           total=int(response.headers.get("Content-Length", 0))
+                           ) as out:
+
+            # save the output to a file
+            for buf in response.iter_content(io.DEFAULT_BUFFER_SIZE):
+                out.write(buf)
+                bytes_data += buf
+
+        return bytes_data
+
+    else:
+        print(' '.join(['Loading cached', file_name, suffix]))
+        return open(file_path, 'rb').read()
+
+
 def get_cache_list(cache_dir=os.getcwd(), full_path=True):
     if full_path:
         return [f for f in glob.glob(os.path.join(cache_dir, '**/*.csv.gz'), recursive=True)]
@@ -76,39 +114,6 @@ def requests_retry_session(
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     return session
-
-
-def fetch_bytes(file_url, suffix="", cache=True):
-    file_path = os.path.join('../cache', urlparse(file_url).path.lstrip('/'))
-    file_name = os.path.basename(file_url)
-
-    if not os.path.exists(file_path.replace(file_name, '')):
-        os.makedirs(file_path.replace(file_name, ''))
-
-    # Check if already cached
-    if not os.path.exists(file_path):
-        s = requests.Session()
-        response = requests_retry_session(session=s).get(file_url, stream=True, timeout=5)
-
-        # file obj as real file or null
-        obj = open(file_path, 'wb') if cache else open(os.devnull, 'wb')
-
-        bytes_data = b''
-        with tqdm.wrapattr(obj, "write",
-                           desc=' '.join(['Fetching', file_name, suffix]),
-                           total=int(response.headers.get("Content-Length", 0))
-                           ) as out:
-
-            # save the output to a file
-            for buf in response.iter_content(io.DEFAULT_BUFFER_SIZE):
-                out.write(buf)
-                bytes_data += buf
-
-        return bytes_data
-
-    else:
-        print(' '.join(['Loading cached', file_name, suffix]))
-        return open(file_path, 'rb').read()
 
 
 def iterable_to_stream(iterable, buffer_size=io.DEFAULT_BUFFER_SIZE):
