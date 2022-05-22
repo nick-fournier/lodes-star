@@ -17,7 +17,6 @@ def fetch_bytes(file_url, suffix="", cache=True):
     else:
         file_path = os.path.join('./cache', urlparse(file_url).path.lstrip('/'))
 
-    print(file_path)
     file_name = os.path.basename(file_url)
 
     if not os.path.exists(file_path.replace(file_name, '')):
