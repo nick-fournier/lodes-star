@@ -44,18 +44,18 @@ def fetch_lodes(state,
 
 
 # Fetch Census Blocks
-def fetch_geoblocks(state, year='2021', cache=True):
+def fetch_geo(state, geography, year='2021', cache=True):
     assert(len(year) == 4)
     year = str(year)
 
     if len(state) > 2:
-        state = State.abb[state.capitalize()].lower()
-    state_num = State.code[state.upper()]
+        state = State.name2abb[state.capitalize()].lower()
+    state_num = State.abb2code[state.upper()]
 
     # Format the file url
-    url_template = 'https://www2.census.gov/geo/tiger/TIGER{year}/TABBLOCK/tl_{year}_{fips}_tabblock10.zip'
+    url_template = 'https://www2.census.gov/geo/tiger/TIGER{year}/{geography}/tl_{year}_{fips}_tabblock10.zip'
     # url_template = 'https://www2.census.gov/geo/tiger/TGRGDB{yy}/tlgdb_{yyyy}_a_{state_num}_{state}.gdb.zip'
-    file_url = url_template.format(**{'year': year, 'fips': state_num})
+    file_url = url_template.format(**{'year': year, 'geography': geography, 'fips': state_num})
 
     # Fetch the file from URL or cache
     bytes_data = fetch_bytes(file_url, cache=cache)
