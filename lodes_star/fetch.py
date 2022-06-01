@@ -1,8 +1,10 @@
 import fiona
 import gzip
+import os
+import io
 import geopandas as gpd
 import pandas as pd
-from lodes_star.utils import *
+from lodes_star.utils import get_latest_year, get_file_list, fetch_bytes
 from lodes_star.state_codes import State
 
 
