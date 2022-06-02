@@ -54,10 +54,14 @@ def fetch_geo(state, geography, year='2021', cache=True):
         state = State.name2abb[state.capitalize()].lower()
     state_num = State.abb2code[state.upper()]
 
+    altgeo = geography.lower()
+    if geography == 'TABBLOCK':
+        altgeo = geography.lower() + '10'
+
     # Format the file url
-    url_template = 'https://www2.census.gov/geo/tiger/TIGER{year}/{geography}/tl_{year}_{fips}_tabblock10.zip'
+    url_template = 'https://www2.census.gov/geo/tiger/TIGER{year}/{geography}/tl_{year}_{fips}_{altgeo}.zip'
     # url_template = 'https://www2.census.gov/geo/tiger/TGRGDB{yy}/tlgdb_{yyyy}_a_{state_num}_{state}.gdb.zip'
-    file_url = url_template.format(**{'year': year, 'geography': geography, 'fips': state_num})
+    file_url = url_template.format(**{'year': year, 'geography': geography, 'fips': state_num, 'altgeo': altgeo})
 
     # Fetch the file from URL or cache
     bytes_data = fetch_bytes(file_url, cache=cache)
