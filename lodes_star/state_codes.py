@@ -1,8 +1,8 @@
 import csv
-
+import os
 
 class Geographies:
-    with open('geographies.csv') as csvfile:
+    with open(os.path.join(os.path.dirname(__file__), 'geographies.csv')) as csvfile:
         next(csvfile)
         csv_reader = csv.reader(csvfile)
         geographies = dict(csv_reader)
@@ -22,7 +22,7 @@ class Geographies:
 
 
 class State:
-    with open('states.csv') as csvfile:
+    with open(os.path.join(os.path.dirname(__file__), 'states.csv')) as csvfile:
         csv_reader = csv.DictReader(csvfile)
         states = list(csv_reader)
 
