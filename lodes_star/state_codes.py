@@ -1,6 +1,7 @@
 import csv
 import os
 
+
 class Geographies:
     with open(os.path.join(os.path.dirname(__file__), 'geographies.csv')) as csvfile:
         next(csvfile)
