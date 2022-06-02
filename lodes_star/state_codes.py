@@ -1,7 +1,8 @@
 import csv
 
+
 class Geographies:
-    with open('lodes_star/geographies.csv') as csvfile:
+    with open('geographies.csv') as csvfile:
         next(csvfile)
         csv_reader = csv.reader(csvfile)
         geographies = dict(csv_reader)
@@ -13,7 +14,6 @@ class Geographies:
             print(k, ' '*(whitespace - len(k)), v)
         return
 
-
     def __new__(cls, geography=None):
         if geography in cls.geographies.keys():
             return cls.geographies[geography]
@@ -21,11 +21,8 @@ class Geographies:
             print("Geography not found")
 
 
-
-
-
 class State:
-    with open('lodes_star/states.csv') as csvfile:
+    with open('states.csv') as csvfile:
         csv_reader = csv.DictReader(csvfile)
         states = list(csv_reader)
 
