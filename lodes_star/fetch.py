@@ -25,7 +25,12 @@ def fetch_lodes(state,
         print('No year specified, defaulting to latest year ' + year)
 
     # Create file list
-    flist = get_file_list(base_url, state, zone_types, job_types, segments, year)
+    flist = get_file_list(base_url=base_url,
+                          state=state,
+                          zone_types=zone_types,
+                          segments=segments,
+                          job_types=job_types,
+                          year=year)
 
     # Downloading files
     lodes = {}
