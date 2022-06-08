@@ -80,7 +80,7 @@ def get_file_list(base_url, state, zone_types, segments, job_types, year):
             if is_odfile or is_racwacfile:
                 file_list[node] = os.path.join(url, node)
 
-        return file_list
+    return file_list
 
 
 def get_latest_year(base_url, state):
