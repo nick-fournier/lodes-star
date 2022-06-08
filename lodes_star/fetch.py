@@ -9,13 +9,15 @@ from lodes_star.state_codes import State
 
 
 def fetch_lodes(state,
-                zone_types='od',
-                job_cat='JT00',
+                zone_types=['od', 'rac', 'wac'],
+                job_types=['JT00'],
+                segments=['S000'],
                 year=None,
                 cache=True):
 
     zone_types = [zone_types] if isinstance(zone_types, str) else zone_types
-    job_cat = [job_cat] if isinstance(job_cat, str) else job_cat
+    job_types = [job_types] if isinstance(job_types, str) else job_types
+    segments = [segments] if isinstance(segments, str) else segments
     base_url = 'https://lehd.ces.census.gov/data/lodes/LODES7'
 
     if not year:
@@ -23,7 +25,7 @@ def fetch_lodes(state,
         print('No year specified, defaulting to latest year ' + year)
 
     # Create file list
-    flist = get_file_list(base_url, state, zone_types, job_cat, year)
+    flist = get_file_list(base_url, state, zone_types, job_types, segments, year)
 
     # Downloading files
     lodes = {}
@@ -34,13 +36,11 @@ def fetch_lodes(state,
 
         # Decompress the gzip bytes data and read into pandas dataframe
         string_io = io.StringIO(gzip.decompress(bytes_data).decode('utf-8'))
-        df = pd.read_csv(string_io, dtype={'h_geocode': str, 'w_geocode': str})
+        df = pd.read_csv(string_io, dtype={'h_geocode': str, 'w_geocode': str, 'createdate': str})
 
         # Stash it
         key = fname.replace('.csv.gz', '')
-        lodes[key] = df.drop(columns='createdate')
-
-    print('done')
+        lodes[key] = df
 
     return lodes
 

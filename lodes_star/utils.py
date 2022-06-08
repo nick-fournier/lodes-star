@@ -55,7 +55,7 @@ def get_cache_list(cache_dir=os.getcwd(), full_path=True):
         return [os.path.basename(f) for f in glob.glob(os.path.join(cache_dir, '**/*.csv.gz'), recursive=True)]
 
 
-def get_file_list(base_url, state, zone_types, job_cat, year):
+def get_file_list(base_url, state, zone_types, segments, job_types, year):
     file_list = {}
 
     for zone in zone_types:
@@ -70,10 +70,17 @@ def get_file_list(base_url, state, zone_types, job_cat, year):
         hrefs = [x.get('href') for x in BeautifulSoup(response.text, 'html.parser').find_all('a')]
 
         for node in hrefs:
-            if node.endswith('.csv.gz') and year in node and any([True for x in job_cat if x in node]):
+            is_jt = any([True for x in job_types if x in node])
+            is_seg = any([True for x in segments if x in node])
+            is_year_file = node.endswith('.csv.gz') and year in node
+
+            is_odfile = zone.lower() == 'od' and is_year_file and is_jt
+            is_racwacfile = zone.lower() != 'od' and is_year_file and is_jt and is_seg
+
+            if is_odfile or is_racwacfile:
                 file_list[node] = os.path.join(url, node)
 
-    return file_list
+        return file_list
 
 
 def get_latest_year(base_url, state):
