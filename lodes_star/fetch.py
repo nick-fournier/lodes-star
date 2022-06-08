@@ -57,7 +57,7 @@ def fetch_geo(state, geography, year='2021', cache=True):
 
     if len(state) > 2:
         state = State.name2abb[state.capitalize()].lower()
-    state_num = State.abb2code[state.upper()]
+    state_num = State.abb2code[state.upper()].zfill(2)
 
     altgeo = geography.lower()
     if geography == 'TABBLOCK':
