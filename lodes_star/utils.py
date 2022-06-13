@@ -10,12 +10,19 @@ from urllib3.util.retry import Retry
 from urllib.parse import urlparse
 
 
-###
 def fetch_bytes(file_url, suffix="", cache=True):
+
+    file_url_path = urlparse(file_url).path.lstrip('/')
+    # Setup custom file paths
+    if 'lehd.ces.census.gov' in file_url:
+        file_url_path = file_url_path.replace('data/', '')
+    if 'nhts.ornl.gov' in file_url:
+        file_url_path = os.path.join('NHTS', os.path.basename(file_url_path))
+
     if isinstance(cache, str):
-        file_path = os.path.join(cache, urlparse(file_url).path.lstrip('/'))
+        file_path = os.path.join(cache, file_url_path)
     else:
-        file_path = os.path.join('./cache', urlparse(file_url).path.lstrip('/'))
+        file_path = os.path.join('./cache', file_url_path)
 
     file_name = os.path.basename(file_url)
 
